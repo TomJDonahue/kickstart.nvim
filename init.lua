@@ -139,7 +139,11 @@ vim.o.splitright = true
 vim.o.splitbelow = true
 
 -- Configure the tab width
-vim.o.tabstop = 4
+vim.opt.expandtab = true
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.autoindent = true
+vim.opt.smarttab = true
 -- Sets how neovim will display certain whitespace characters in the editor.
 --  See `:help 'list'`
 --  and `:help 'listchars'`
@@ -686,6 +690,7 @@ require('lazy').setup({
         -- But for many setups, the LSP (`ts_ls`) will work just fine
         -- ts_ls = {},
         --
+        ols = {},
 
         lua_ls = {
           -- cmd = { ... },
@@ -774,6 +779,7 @@ require('lazy').setup({
         -- Conform can also run multiple formatters sequentially
         python = { 'isort', 'black' },
         go = { 'goimports', 'gopls' },
+        odin = { 'odinfmt' },
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
       },
@@ -976,7 +982,7 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.debug',
   -- require 'kickstart.plugins.indent_line',
   -- require 'kickstart.plugins.lint',
   -- require 'kickstart.plugins.autopairs',
