@@ -329,6 +329,27 @@ require('lazy').setup({
     event = 'InsertCharPre', -- Set the event to 'InsertCharPre' for better compatibility
     priority = 1000,
   },
+  --FOURTH PLUGIN
+  {
+    'akinsho/toggleterm.nvim',
+    version = '*',
+    config = function()
+      require('toggleterm').setup {
+        open_mapping = [[<c-\>]],
+        hide_numbers = true, -- hide the number column in toggleterm buffers
+        autochdir = false, -- when neovim changes it current directory the terminal will change it's own when next it's opened
+        shade_terminals = true, -- NOTE: this option takes priority over highlights specified so if you specify Normal highlights you should set this to false
+        persist_size = true,
+        persist_mode = true, -- if set to true (default) the previous terminal mode will be remembered
+        direction = 'float',
+        close_on_exit = true, -- close the terminal window when the process exits
+        clear_env = false, -- use only environmental variables from `env`, passed to jobstart()
+        -- Change the default shell. Can be a string or a function returning a string
+        shell = vim.o.shell,
+        auto_scroll = true, -- automatically scroll to the bottom on terminal output
+      }
+    end,
+  },
   {
     'L3MON4D3/LuaSnip',
     keys = function()
@@ -1099,5 +1120,7 @@ require('lspconfig')['gdscript'].setup {
   name = 'godot',
   cmd = vim.lsp.rpc.connect('127.0.0.1', 6005),
 }
+local ensure_installed = vim.tbl_keys({ gdtoolkit = { 'gdtoolkit' } } or {})
+require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
