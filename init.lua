@@ -774,6 +774,15 @@ require('lazy').setup({
         },
       }
 
+      for name, config in pairs(servers) do
+        local config = config or {}
+        -- This handles overriding only values explicitly passed
+        -- by the server configuration above. Useful when disabling
+        -- certain features of an LSP (for example, turning off formatting for ts_ls)
+        config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+        vim.lsp.config(name, config)
+        vim.lsp.enable(name)
+      end
       -- Ensure the servers and tools above are installed
       --
       -- To check the current status of installed tools and/or manually install
@@ -796,16 +805,6 @@ require('lazy').setup({
       require('mason-lspconfig').setup {
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            -- This handles overriding only values explicitly passed
-            -- by the server configuration above. Useful when disabling
-            -- certain features of an LSP (for example, turning off formatting for ts_ls)
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
       }
     end,
   },
@@ -1092,35 +1091,5 @@ require('lazy').setup({
   },
 })
 
---GODOT CONFIGURATION
---nvim must be opened after godot is opened.
---must be opened with the following command: --listen server.pipe
-local paths_to_check = { '/', '/../' }
-local is_godot_project = false
-local godot_project_path = ''
-local cwd = vim.fn.getcwd()
-
--- iterate over paths and check
-for _, value in pairs(paths_to_check) do
-  if vim.uv.fs_stat(cwd .. value .. 'project.godot') then
-    is_godot_project = true
-    godot_project_path = cwd .. value
-    break
-  end
-end
-
--- check if server is already running in godot project path
-local is_server_running = vim.uv.fs_stat(godot_project_path .. 'server.pipe')
--- start server, if not already running
-if is_godot_project and not is_server_running then
-  vim.fn.serverstart(godot_project_path .. 'server.pipe')
-end
-
-require('lspconfig')['gdscript'].setup {
-  name = 'godot',
-  cmd = vim.lsp.rpc.connect('127.0.0.1', 6005),
-}
-local ensure_installed = vim.tbl_keys({ gdtoolkit = { 'gdtoolkit' } } or {})
-require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
