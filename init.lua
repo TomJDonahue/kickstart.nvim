@@ -958,7 +958,7 @@ require('lazy').setup({
     build = ':TSUpdate',
     config = function()
       local ts = require 'nvim-treesitter'
-      local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+      local parsers = { 'odin', 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
 
       for _, parser in ipairs(parsers) do
         pcall(ts.install, parser)
