@@ -371,7 +371,7 @@ local runners = {
   end,
   
   python = function()
-    return 'python ' .. vim.fn.expand('%')
+    return 'python3 ' .. vim.fn.expand('%')
   end,
   
   go = function()
@@ -425,7 +425,7 @@ local compilers = {
   
   python = function()
     return {
-      makeprg = "python -m py_compile " .. vim.fn.expand('%'),
+      makeprg = "python3 -m py_compile " .. vim.fn.expand('%'),
       errorformat = [[%C %.%#,%A  File "%f"\, line %l%.%#,%Z%[%^ ]%\@=%m]],
     }
   end,
@@ -477,24 +477,75 @@ vim.api.nvim_create_autocmd({"BufEnter", "BufNewFile"}, {
   callback = setup_compiler,
 })
 
--- Build function with quickfix
+-- Convert quickfix list to diagnostics
+local function quickfix_to_diagnostics()
+  local qflist = vim.fn.getqflist()
+  local diagnostics_by_buf = {}
+  
+  -- Clear all previous build diagnostics
+  local ns = vim.api.nvim_create_namespace("build_diagnostics")
+  vim.diagnostic.reset(ns)
+  
+  -- Group diagnostics by buffer
+  for _, item in ipairs(qflist) do
+    if item.bufnr > 0 and item.valid == 1 then
+      if not diagnostics_by_buf[item.bufnr] then
+        diagnostics_by_buf[item.bufnr] = {}
+      end
+      
+      -- Determine severity (E=error, W=warning, default to error)
+      local severity = vim.diagnostic.severity.ERROR
+      if item.type == 'W' or item.type == 'w' then
+        severity = vim.diagnostic.severity.WARN
+      elseif item.type == 'I' or item.type == 'i' then
+        severity = vim.diagnostic.severity.INFO
+      elseif item.type == 'N' or item.type == 'n' then
+        severity = vim.diagnostic.severity.HINT
+      end
+      
+      table.insert(diagnostics_by_buf[item.bufnr], {
+        lnum = item.lnum - 1,  -- 0-indexed
+        col = item.col - 1,    -- 0-indexed
+        message = item.text,
+        severity = severity,
+        source = "build",
+      })
+    end
+  end
+  
+  -- Set diagnostics for each buffer
+  for bufnr, diagnostics in pairs(diagnostics_by_buf) do
+    vim.diagnostic.set(ns, bufnr, diagnostics, {})
+  end
+end
+
+-- Build function with quickfix and diagnostics
 local function build_project()
   -- Save all modified buffers
   vim.cmd('silent! wall')
-
   vim.cmd('cclose')
   
   -- Setup compiler for current filetype
   setup_compiler()
   
   -- Run make and open quickfix
-  vim.cmd('make!')
-  vim.cmd('copen')
+  vim.cmd('silent make!')
+  vim.cmd('redraw!')
+  
+  -- Convert quickfix to diagnostics
+  quickfix_to_diagnostics()
+  
+  -- Open quickfix only if there are errors
+  local qflist = vim.fn.getqflist()
+  if #qflist > 0 then
+    vim.cmd('copen')
+  end
 end
 
 -- Keybinding (using <leader>b for build)
 vim.keymap.set('n', '<leader>b', build_project, { desc = 'Build project and show errors' })
--- Bonus: Quick close terminal window
--- vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>:q<CR>', { desc = 'Close terminal' })
+
+
+
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
