@@ -425,7 +425,7 @@ local compilers = {
   
   python = function()
     return {
-      makeprg = "python3 -m py_compile " .. vim.fn.expand('%'),
+      makeprg = "python3 " .. vim.fn.expand('%'),
       errorformat = [[%C %.%#,%A  File "%f"\, line %l%.%#,%Z%[%^ ]%\@=%m]],
     }
   end,
@@ -536,8 +536,10 @@ local function build_project()
   quickfix_to_diagnostics()
   
   -- Open quickfix only if there are errors
-  local qflist = vim.fn.getqflist()
-  if #qflist > 0 then
+  -- local qflist = vim.fn.getqflist() --changed to querying diagnostics instead of quickfix. 
+  -- Python seems to output into quickfix regardless of errors or not.
+  local dlist = vim.diagnostic.get()
+  if #dlist > 0 then
     vim.cmd('copen')
   end
 end
