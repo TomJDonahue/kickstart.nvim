@@ -47,6 +47,8 @@ vim.keymap.set('n', '<leader>e', '<cmd>Ex<CR>')
 
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
+vim.keymap.set('n', '<leader>j', '<cmd>%!jq .<CR>')
+
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
 vim.diagnostic.config {
@@ -283,7 +285,7 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
@@ -372,7 +374,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        python = { 'isort', 'black' },
+        python3 = { 'isort', 'black' },
         -- go = { 'goimports', 'gopls' },
         odin = { 'odinfmt' },
       },
