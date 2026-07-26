@@ -139,7 +139,7 @@ require('lazy').setup({
         fold_virt_text_handler = handler,
         provider_selector = function(bufnr, filetype, buftype)
           if buftype ~= '' then
-            return '' -- disable ufo for terminals, help, quickfix, etc.
+            return '' -- terminals, help, quickfix, REPLs, etc. — don't try to fold these
           end
           return { 'lsp', 'treesitter' }
         end,
