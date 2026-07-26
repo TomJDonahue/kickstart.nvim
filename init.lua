@@ -97,7 +97,61 @@ rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added via a link or github org/name. To run setup automatically, use `opts = {}`
   { 'NMAC427/guess-indent.nvim', opts = {} },
+  {
+    'kevinhwang91/nvim-ufo',
+    dependencies = { 'kevinhwang91/promise-async' },
+    event = 'BufReadPost', -- lazy-load once a real buffer is open
+    init = function()
+      -- these must be set BEFORE ufo loads
+      vim.o.foldcolumn = '1' -- '0' hides it, '1' shows a slim column
+      vim.o.foldlevel = 99 -- ufo needs a high foldlevel, it handles the rest
+      vim.o.foldlevelstart = 99
+      vim.o.foldenable = true
+    end,
+    config = function()
+      -- basic fold-text handler showing the number of folded lines
+      local handler = function(virtText, lnum, endLnum, width, truncate)
+        local newVirtText = {}
+        local suffix = (' 󰁂 %d '):format(endLnum - lnum)
+        local sufWidth = vim.fn.strdisplaywidth(suffix)
+        local targetWidth = width - sufWidth
+        local curWidth = 0
+        for _, chunk in ipairs(virtText) do
+          local chunkText = chunk[1]
+          local chunkWidth = vim.fn.strdisplaywidth(chunkText)
+          if targetWidth > curWidth + chunkWidth then
+            table.insert(newVirtText, chunk)
+          else
+            chunkText = truncate(chunkText, targetWidth - curWidth)
+            local hlGroup = chunk[2]
+            table.insert(newVirtText, { chunkText, hlGroup })
+            chunkWidth = vim.fn.strdisplaywidth(chunkText)
+            if curWidth + chunkWidth < targetWidth then suffix = suffix .. (' '):rep(targetWidth - curWidth - chunkWidth) end
+            break
+          end
+          curWidth = curWidth + chunkWidth
+        end
+        table.insert(newVirtText, { suffix, 'MoreMsg' })
+        return newVirtText
+      end
 
+      require('ufo').setup {
+        fold_virt_text_handler = handler,
+        provider_selector = function(bufnr, filetype, buftype)
+          if buftype ~= '' then
+            return '' -- disable ufo for terminals, help, quickfix, etc.
+          end
+          return { 'lsp', 'treesitter' }
+        end,
+      }
+    end,
+    keys = {
+      { 'zR', function() require('ufo').openAllFolds() end, desc = 'Open all folds' },
+      { 'zM', function() require('ufo').closeAllFolds() end, desc = 'Close all folds' },
+      { 'zr', function() require('ufo').openFoldsExceptKinds() end, desc = 'Open folds except kinds' },
+      { 'zm', function() require('ufo').closeFoldsWith() end, desc = 'Close folds with' },
+    },
+  },
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -469,7 +523,7 @@ require('lazy').setup({
     build = ':TSUpdate',
     config = function()
       local ts = require 'nvim-treesitter'
-      local parsers = { 'odin', 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
+      local parsers = { 'json', 'odin', 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' }
 
       for _, parser in ipairs(parsers) do
         pcall(ts.install, parser)
